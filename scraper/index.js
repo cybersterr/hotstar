@@ -2,7 +2,7 @@ const axios = require("axios");
 const fs = require("fs");
 
 const JSON_URL = "PASTE_YOUR_JSON_URL_HERE";
-const OUTPUT_FILE = "playlist.m3u";
+const OUTPUT_FILE = "stream.m3u";
 
 async function convertJsonToM3U() {
   try {
