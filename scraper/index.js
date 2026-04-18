@@ -49,9 +49,7 @@ async function convertJsonToM3U() {
       }
 
       // 🔥 EXTINF line (ALL in ONE GROUP)
-      const finalLogo = logo || "https://latestlogo.com/wp-content/uploads/2024/01/jiocinema-logo.png";
-
-m3u += `#EXTINF:-1 tvg-id="${item.id}" tvg-logo="${finalLogo}" group-title="CS OTT | Jio Cinema",${name}\n`;
+      m3u += `#EXTINF:-1 tvg-id="${item.id}" tvg-logo="https://latestlogo.com/wp-content/uploads/2024/01/jiocinema-logo.png" group-title="CS OTT | Jio Cinema",${name}\n`;
 
       // 🔥 Stream URL + headers
       m3u += `${item.m3u8_url}${headerString}\n`;
