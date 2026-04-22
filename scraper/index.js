@@ -4,77 +4,43 @@ const fs = require("fs");
 const JSON_URL = "https://netx.streamstar18.workers.dev/hot1";
 const OUTPUT_FILE = "stream.m3u";
 
-async function convertJsonToM3U() {
-  try {
-    const { data } = await axios.get(JSON_URL, { responseType: "json" });
+async function run() {
+  const { data } = await axios.get(JSON_URL);
 
-    if (!Array.isArray(data)) {
-      throw new Error("Invalid JSON format (expected array)");
+  let out = "#EXTM3U\n";
+  const used = new Set();
+
+  for (const item of data) {
+    const url = item.m3u8_url || item.mpd_url;
+    if (!url) continue;
+
+    const uid = item.id + "_" + item.name;
+    if (used.has(uid)) continue;
+    used.add(uid);
+
+    const name = item.name || "Unknown";
+    const logo = item.logo || "";
+    const group = "🎬 OTT | Hotstar";
+
+    out += `#EXTINF:-1 tvg-id="${uid}" tvg-logo="${logo}" group-title="${group}",${name}\n`;
+
+    if (item.type === "dash") {
+      out += `#KODIPROP:inputstream.adaptive.manifest_type=mpd\n`;
+
+      if (item.license_url) {
+        const match = item.license_url.match(/keyid=([^&]+).*key=([^&]+)/i);
+        if (match) {
+          out += `#KODIPROP:inputstream.adaptive.license_type=clearkey\n`;
+          out += `#KODIPROP:inputstream.adaptive.license_key=${match[1]}:${match[2]}\n`;
+        }
+      }
     }
 
-    let m3u = "#EXTM3U\n";
-
-    let skipFirst = true; // 🔥 skip first entry
-
-    data.forEach((item, index) => {
-      if (skipFirst) {
-        skipFirst = false;
-        return;
-      }
-
-      if (!item.m3u8_url) return;
-
-      const name = clean(item.name);
-      const logo = item.logo || "";
-      const userAgent = item.user_agent || "";
-      const headers = item.headers || {};
-
-      // ✅ ADDED (only change)
-      const finalLogo = item.logo && item.logo.trim() !== ""
-        ? item.logo
-        : "https://latestlogo.com/wp-content/uploads/2024/01/jiocinema-logo.png";
-
-      // 🔥 Build Kodi header string
-      let headerString = "";
-
-      if (userAgent) {
-        headerString += `|User-Agent=${encodeURIComponent(userAgent)}`;
-      }
-
-      if (headers.Cookie) {
-        headerString += `${headerString ? "&" : "|"}Cookie=${encodeURIComponent(headers.Cookie)}`;
-      }
-
-      if (headers.Origin) {
-        headerString += `&Origin=${encodeURIComponent(headers.Origin)}`;
-      }
-
-      if (headers.Referer) {
-        headerString += `&Referer=${encodeURIComponent(headers.Referer)}`;
-      }
-
-      // 🔥 EXTINF line (ALL in ONE GROUP)
-      m3u += `#EXTINF:-1 tvg-id="${item.id}" tvg-logo="${finalLogo}" group-title="🎬 OTT | Jio Cinema" group-logo="https://latestlogo.com/wp-content/uploads/2024/01/jiocinema-logo.png",${name}\n`;
-
-      // 🔥 Stream URL + headers
-      m3u += `${item.m3u8_url}${headerString}\n`;
-    });
-
-    fs.writeFileSync(OUTPUT_FILE, m3u);
-    console.log("✅ M3U PLAYLIST GENERATED SUCCESSFULLY");
-
-  } catch (err) {
-    console.error("❌ ERROR:", err.message);
+    out += `${url}\n`;
   }
+
+  fs.writeFileSync(OUTPUT_FILE, out);
+  console.log("done");
 }
 
-// 🔧 Clean text
-function clean(text) {
-  if (!text) return "";
-  return text
-    .replace(/[^\x20-\x7E]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-convertJsonToM3U();
+run();
