@@ -10,7 +10,7 @@ async function run() {
   let out = "#EXTM3U\n";
   const used = new Set();
 
-  for (const item of data) {
+  for (const item of data.slice(1)) {   // skips 1st entry only
     const url = item.m3u8_url || item.mpd_url;
     if (!url) continue;
 
@@ -20,7 +20,7 @@ async function run() {
 
     const name = item.name || "Unknown";
     const logo = item.logo || "";
-    const group = "🎬 OTT | Hotstar";
+    const group = "🎬 OTT | JIO CINEMA";
 
     out += `#EXTINF:-1 tvg-id="${uid}" tvg-logo="${logo}" group-title="${group}",${name}\n`;
 
